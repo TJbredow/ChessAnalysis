@@ -1,6 +1,7 @@
 playeranalysis/*
 playercache/*
 *.csv
+venv_local/*
 
 
 ### Default Python related ignorefiles
