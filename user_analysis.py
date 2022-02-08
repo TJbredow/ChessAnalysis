@@ -15,6 +15,11 @@ DATABASE_FILE = './eco.json'
 with open(DATABASE_FILE,'r', encoding='utf-8') as databasefile:
     OPENING_DATABASE = json.loads(databasefile.read())
 
+
+class PlayerNotFound(Exception):
+    """Player not found in Chess.com database"""
+    pass
+
 class UserData:
     """Non-terable General data class for a user.
         Takes one required parameter: Username (str) of a chess player on chess.com
@@ -36,7 +41,7 @@ class UserData:
         lastsix = url[::-1][0:6][::-1].replace('/','-')
         if f'{self.user}-{lastsix}' in os.listdir(PLAYER_CACHE_DIR) and self.cache:
             with open(
-                os.path.join(PLAYER_CACHE_DIR, lastsix),
+                os.path.join(PLAYER_CACHE_DIR, f'{self.user}-{lastsix}'),
                 'r',
                 encoding='utf-8')\
             as cachefile:
@@ -67,11 +72,18 @@ class UserData:
         else:
             self.cache = False
         archives = requests.get(f"https://api.chess.com/pub/player/{username}/games/archives")
-        months = archives.json()['archives'][::-1][0:int(kargs.get('samplesize',12))]
-        for month in months:
-            self.games.extend(
-                self.pullgames(month)
-                )
+        try:
+            months = archives.json().get('archives')
+            if months:
+                months = months[::-1][0:int(kargs.get('samplesize',12))]
+                for month in months:
+                    self.games.extend(
+                        self.pullgames(month)
+                        )
+            else:
+                raise PlayerNotFound
+        except requests.exceptions.JSONDecodeError:
+            raise PlayerNotFound
         if not kargs.get('incbullet', False):
             self.games = list(filter(
                 lambda x: x['time_class'] != 'bullet', self.games
@@ -79,11 +91,13 @@ class UserData:
 
 
 
-    def analysis(self, color: str, openingdepth='deep') -> pd.DataFrame:
+    def analysis(self, color: str, openingdepth='deep', datatype='df') -> pd.DataFrame:
         """Analyses the set of games and returns a Pandas Dataframe according to parameters
         Required Parameters:
+        color: The username's games as which color to analyze, no default
+        Optional Parameters:
         openingdepth: Choose from firstmove, root, family, or deepest line in database
-
+        datatype: Choose from Pandas Dataframe (df), or Python Dict. (dict)
         """
         games_byopening = {}
         for game in self.games:
@@ -93,6 +107,7 @@ class UserData:
                 if not games_byopening.get(opening['name']):
                     games_byopening[opening['name']] = {
                         'eco' : opening.get('eco'),
+                        'moves' : opening.get('moves'),
                         'gamesplayed' : 0,
                         'win' : 0,
                         'loss' : 0,
@@ -111,7 +126,10 @@ class UserData:
                         games_byopening[o]['win'] / games_byopening[o]['gamesplayed'])
                     games_byopening[o]['drawtotal'] = float(
                         games_byopening[o]['draw'] / games_byopening[o]['gamesplayed'])
-        return pd.DataFrame.from_dict(games_byopening, orient='index')
+        if datatype == 'df':
+            return pd.DataFrame.from_dict(games_byopening, orient='index')
+        else:
+            return games_byopening
 
 class GameAnalysis:
     """Non-iterable User Object with the following attributes:
@@ -159,8 +177,7 @@ class GameAnalysis:
     def find_opening(self) -> list:
         """Returns dict value from database that matches opening."""
         openings = list(filter( # filters all openings that match
-            lambda x: x['moves'] in self.moves, OPENING_DATABASE
-            ))
+            lambda x: x['moves'] in self.moves, OPENING_DATABASE))
         if openings:
             return openings
         return [{

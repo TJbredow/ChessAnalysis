@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>ChessAnalysis</title>
+    <link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/Navigation-Clean.css">
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg navigation-clean">
+        <div class="container"><a class="navbar-brand" href="#">Chess Analysis</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown"><a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#">Options</a>
+                        <div class="dropdown-menu"><a class="dropdown-item" href="#">First Item</a><a class="dropdown-item" href="#">Second Item</a><a class="dropdown-item" href="#">Third Item</a></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row text-center justify-content-center" style="max-width: 800;padding: 0;">
+            <div class="col-md-12 col-xl-9 offset-xl-0 text-start" style="max-width: 60%;">
+                <h1 class="text-center">Player Search</h1>
+                <h4 class="text-center text-secondary">Options</h4>
+                <form method="post">
+                    <div class="row">
+                        <div class="col"><input class="form-control" type="text" name="PlayerName" placeholder="chess.com username" style="text-align: center;max-width: 100;"></div>
+                        <div class="col text-start" style="max-width: 15%;"><button class="btn btn-primary" type="submit">Analyze!</button></div>
+                    </div>
+                    <div class="row">
+                        <div class="col" style="padding-top: 12;padding-bottom: 12;">
+                            <h6 class="text-center">Color to analyze</h6>
+                            <div class="form-check"><input class="form-check-input" type="radio" id="formCheck-1" name="analysisColor" value="white" checked=""><label class="form-check-label" for="analysisColor">Analyze White Games</label></div>
+                            <div class="form-check"><input class="form-check-input" type="radio" id="formCheck-2" name="analysisColor" value="black"><label class="form-check-label" for="analysisColor">Analyze Black Games</label></div>
+                        </div>
+                        <div class="col">
+                            <h6 class="text-center">Depth</h6>
+                            <div class="form-check"><input class="form-check-input" type="radio" id="formCheck-4" name="depth" value="deep" checked=""><label class="form-check-label" for="depth">Deep</label></div>
+                            <div class="form-check"><input class="form-check-input" type="radio" id="formCheck-3" name="depth" value="family"><label class="form-check-label" for="depth">Opening Family</label></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {{error_template}}
+                <div class="accordion" role="tablist" id="accordion-1">
+                    {% for openingfamily in accordion_data %}   
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" aria-expanded="false" data-bs-toggle="collapse" data-bs-target="#accordion-1 .{{accordion_data[openingfamily]['eco']}}">{{ openingfamily }} | Games: {{ accordion_data[openingfamily]['gamesplayed'] }} | Winpct: {{accordion_data[openingfamily]['wintotalpct']}}</button></h2>
+                        <div class="accordion-collapse collapse show {{accordion_data[openingfamily]['eco']}}" role="tabpanel" data-bs-parent="#accordion-1">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Variation</th>
+                                                <th>Games</th>
+                                                <th>Wins</th>
+                                                <th>Losses</th>
+                                                <th>Draws</th>
+                                                <th>Win %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for variation in accordion_data[openingfamily]['variations'] %}
+                                            <tr>
+                                                <td>{{variation}}</td>
+                                                <td>{{accordion_data[openingfamily]['variations'][variation]['gamesplayed']}}</td>
+                                                <td>{{accordion_data[openingfamily]['variations'][variation]['win']}}</td>
+                                                <td>{{accordion_data[openingfamily]['variations'][variation]['loss']}}</td>
+                                                <td>{{accordion_data[openingfamily]['variations'][variation]['draw']}}</td>
+                                                <td>{{accordion_data[openingfamily]['variations'][variation]['wintotalpct']}}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="static/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
